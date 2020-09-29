@@ -54,7 +54,8 @@ defmodule Triplex.Mixfile do
       {:inch_ex, ">= 0.0.0", only: :docs},
       {:mariaex, "~> 0.9.0", optional: true},
       {:plug, "~> 1.6", optional: true},
-      {:postgrex, ">= 0.14.0", optional: true}
+      {:postgrex, ">= 0.14.0", optional: true},
+      {:tds, "~> 2.1.1"}
     ]
   end
 

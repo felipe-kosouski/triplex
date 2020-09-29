@@ -22,6 +22,7 @@ defmodule Triplex do
 
   alias Ecto.Adapters.SQL
   alias Ecto.Migrator
+  alias Ecto.Adapters.Tds
 
   @doc """
   Returns a `%Triplex.Config{}` struct with all the args loaded from the app
@@ -151,6 +152,7 @@ defmodule Triplex do
         case repo.__adapter__ do
           Ecto.Adapters.MySQL -> "CREATE DATABASE #{to_prefix(tenant)}"
           Ecto.Adapters.Postgres -> "CREATE SCHEMA \"#{to_prefix(tenant)}\""
+          Ecto.Adapters.Tds -> "CREATE DATABASE #{to_prefix(tenant)}"
         end
 
       case SQL.query(repo, sql, []) do
@@ -186,6 +188,9 @@ defmodule Triplex do
 
       Ecto.Adapters.Postgres ->
         {:ok, :skipped}
+
+      Ecto.Adapters.Tds ->
+        {:ok, :skipped}
     end
   end
 
@@ -195,6 +200,9 @@ defmodule Triplex do
         SQL.query(repo, "DELETE FROM #{Triplex.config().tenant_table} WHERE NAME = ?", [tenant])
 
       Ecto.Adapters.Postgres ->
+        {:ok, :skipped}
+
+      Ecto.Adapters.Tds ->
         {:ok, :skipped}
     end
   end
@@ -225,6 +233,7 @@ defmodule Triplex do
         case repo.__adapter__ do
           Ecto.Adapters.MySQL -> "DROP DATABASE #{to_prefix(tenant)}"
           Ecto.Adapters.Postgres -> "DROP SCHEMA \"#{to_prefix(tenant)}\" CASCADE"
+          Ecto.Adapters.Tds -> "DROP TABLE #{to_prefix(tenant)}"
         end
 
       with {:ok, _} <- SQL.query(repo, sql, []),
@@ -253,6 +262,9 @@ defmodule Triplex do
         Ecto.Adapters.MySQL ->
           {:error, "you cannot rename tenants in a MySQL database."}
 
+        Ecto.Adapters.Tds ->
+          {:error, "you cannot rename tenants in a MSSQL database."}
+
         Ecto.Adapters.Postgres ->
           sql = """
           ALTER SCHEMA \"#{to_prefix(old_tenant)}\"
@@ -277,6 +289,9 @@ defmodule Triplex do
     sql =
       case repo.__adapter__ do
         Ecto.Adapters.MySQL ->
+          "SELECT name FROM #{config().tenant_table}"
+
+        Ecto.Adapters.Tds ->
           "SELECT name FROM #{config().tenant_table}"
 
         Ecto.Adapters.Postgres ->
@@ -305,6 +320,9 @@ defmodule Triplex do
       sql =
         case repo.__adapter__ do
           Ecto.Adapters.MySQL ->
+            "SELECT COUNT(*) FROM #{config().tenant_table} WHERE name = ?"
+
+          Ecto.Adapters.Tds ->
             "SELECT COUNT(*) FROM #{config().tenant_table} WHERE name = ?"
 
           Ecto.Adapters.Postgres ->
