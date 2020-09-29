@@ -150,7 +150,7 @@ defmodule Triplex do
     else
       sql =
         case repo.__adapter__ do
-          Ecto.Adapters.MySQL -> "CREATE DATABASE #{to_prefix(tenant)}"
+          Ecto.Adapters.MyXQL -> "CREATE DATABASE #{to_prefix(tenant)}"
           Ecto.Adapters.Postgres -> "CREATE SCHEMA \"#{to_prefix(tenant)}\""
           Ecto.Adapters.Tds -> "CREATE DATABASE #{to_prefix(tenant)}"
         end
@@ -182,7 +182,7 @@ defmodule Triplex do
 
   defp add_to_tenants_table(tenant, repo) do
     case repo.__adapter__ do
-      Ecto.Adapters.MySQL ->
+      Ecto.Adapters.MyXQL ->
         sql = "INSERT INTO #{Triplex.config().tenant_table} (name) VALUES (?)"
         SQL.query(repo, sql, [tenant])
 
@@ -190,20 +190,21 @@ defmodule Triplex do
         {:ok, :skipped}
 
       Ecto.Adapters.Tds ->
-        {:ok, :skipped}
+        sql = "INSERT INTO #{Triplex.config().tenant_table} (name) VALUES (?)"
+        SQL.query(repo, sql, [tenant])
     end
   end
 
   defp remove_from_tenants_table(tenant, repo) do
     case repo.__adapter__ do
-      Ecto.Adapters.MySQL ->
+      Ecto.Adapters.MyXQL ->
         SQL.query(repo, "DELETE FROM #{Triplex.config().tenant_table} WHERE NAME = ?", [tenant])
 
       Ecto.Adapters.Postgres ->
         {:ok, :skipped}
 
       Ecto.Adapters.Tds ->
-        {:ok, :skipped}
+        SQL.query(repo, "DELETE FROM #{Triplex.config().tenant_table} WHERE NAME = ?", [tenant])
     end
   end
 
@@ -231,7 +232,7 @@ defmodule Triplex do
     else
       sql =
         case repo.__adapter__ do
-          Ecto.Adapters.MySQL -> "DROP DATABASE #{to_prefix(tenant)}"
+          Ecto.Adapters.MyXQL -> "DROP DATABASE #{to_prefix(tenant)}"
           Ecto.Adapters.Postgres -> "DROP SCHEMA \"#{to_prefix(tenant)}\" CASCADE"
           Ecto.Adapters.Tds -> "DROP TABLE #{to_prefix(tenant)}"
         end
@@ -259,8 +260,8 @@ defmodule Triplex do
       {:error, reserved_message(new_tenant)}
     else
       case repo.__adapter__ do
-        Ecto.Adapters.MySQL ->
-          {:error, "you cannot rename tenants in a MySQL database."}
+        Ecto.Adapters.MyXQL ->
+          {:error, "you cannot rename tenants in a MyXQL database."}
 
         Ecto.Adapters.Tds ->
           {:error, "you cannot rename tenants in a MSSQL database."}
@@ -288,7 +289,7 @@ defmodule Triplex do
   def all(repo \\ config().repo) do
     sql =
       case repo.__adapter__ do
-        Ecto.Adapters.MySQL ->
+        Ecto.Adapters.MyXQL ->
           "SELECT name FROM #{config().tenant_table}"
 
         Ecto.Adapters.Tds ->
@@ -319,7 +320,7 @@ defmodule Triplex do
     else
       sql =
         case repo.__adapter__ do
-          Ecto.Adapters.MySQL ->
+          Ecto.Adapters.MyXQL ->
             "SELECT COUNT(*) FROM #{config().tenant_table} WHERE name = ?"
 
           Ecto.Adapters.Tds ->
